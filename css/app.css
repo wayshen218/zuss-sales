@@ -319,3 +319,12 @@ details.server label { margin-top: 8px; }
 /* Stockist badge: gold-on-black so it stands out from the red theme */
 .tag.gold { background: #1a1a1a; color: #f2c14e; }
 .star.on { color: #d0112b; background: #fdecee; border-color: #f3b3bd; }
+
+/* Shop card details: follow-up, last check-in, last order */
+.shop-info { display: grid; gap: 4px; margin-top: 8px; padding: 8px 10px; background: #f7f7f8; border-radius: 10px; font-size: 13px; color: var(--ink); }
+.si { display: flex; gap: 7px; align-items: flex-start; line-height: 1.35; }
+.si-ic { flex: 0 0 auto; width: 16px; text-align: center; }
+.si-rel { color: var(--muted); }
+.si.due { color: #8a4a00; } .si.due .si-rel { color: #8a4a00; font-weight: 700; }
+.si.overdue { color: var(--red-2); } .si.overdue .si-rel { color: var(--red-2); font-weight: 700; }
+.si-note { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: #3a3d42; margin-top: 2px; white-space: pre-wrap; }

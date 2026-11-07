@@ -1,5 +1,5 @@
-import { esc, hasPin, haversineKm, relDays, fmtDate, today } from '../util.js';
-import { isFav, lastVisit, dispatch, tierOf } from '../store.js';
+import { esc, hasPin, haversineKm, relDays, fmtDate, fmtDateTime, today, rm } from '../util.js';
+import { isFav, lastVisit, ordersFor, dispatch, tierOf } from '../store.js';
 import { stageTag, tag } from '../ui.js';
 import { lastPosition } from '../geo.js';
 
@@ -21,8 +21,20 @@ export const fmtKm = km => km == null ? '' : (km < 1 ? `${Math.round(km * 1000)}
 
 export function shopRow(s) {
   const lv = lastVisit(s.id);
+  const lo = ordersFor(s.id).find(o => o.status !== 'Cancelled');
   const km = distanceKm(s);
-  const due = s.follow_up && s.follow_up <= today() && !['Won', 'Lost'].includes(s.stage);
+  let fu = '';
+  if (s.follow_up) {
+    const t = today();
+    const cls = s.follow_up < t ? 'overdue' : s.follow_up === t ? 'due' : '';
+    fu = `<div class="si ${cls}"><span class="si-ic">📅</span><span>Follow-up <b>${esc(fmtDate(s.follow_up))}</b> <span class="si-rel">(${esc(relDays(s.follow_up))})</span></span></div>`;
+  }
+  const visit = lv
+    ? `<div class="si"><span class="si-ic">📝</span><span><b>${esc(fmtDateTime(lv.at))}</b> · ${esc(lv.by || '')}${lv.note ? `<span class="si-note">${esc(lv.note)}</span>` : ' <span class="muted">(no note)</span>'}</span></div>`
+    : '';
+  const order = lo
+    ? `<div class="si"><span class="si-ic">🧾</span><span>Last order <b>${esc(fmtDate(lo.created_at))}</b> · ${rm(lo.total)} · ${esc(lo.hq_status)}</span></div>`
+    : '';
   return `<div class="shop-row">
     ${star(s)}
     <a class="shop-main" href="#/shop/${encodeURIComponent(s.id)}">
@@ -32,9 +44,9 @@ export function shopRow(s) {
         ${s.stockist ? tag('Stockist', 'gold') : ''}
         ${s.area ? tag(s.area, 'area') : ''}
         ${hasPin(s) ? tag(km != null ? '📍 ' + fmtKm(km) : '📍 Pinned', 'pin') : ''}
-        ${due ? tag('Follow-up ' + relDays(s.follow_up), 'warn') : ''}
       </div>
-      <div class="shop-sub">${esc(s.phone || 'No phone')}${s.contact ? ' · ' + esc(s.contact) : ''}${lv ? ' · Visited ' + esc(relDays(lv.at)) : ''}</div>
+      <div class="shop-sub">${esc(s.phone || 'No phone')}${s.contact ? ' · ' + esc(s.contact) : ''}${!lv ? ' · <span class="muted">not visited yet</span>' : ''}</div>
+      ${fu || visit || order ? `<div class="shop-info">${fu}${visit}${order}</div>` : ''}
     </a>
   </div>`;
 }
