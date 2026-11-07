@@ -2,6 +2,7 @@ import { store, subscribe, login, sync, onAuthLost, pendingCount, takeRejectNoti
 import { route, render, go, back, toast, sheetIsOpen, currentView } from './ui.js';
 import { esc, fmtDateTime } from './util.js';
 import { getApiUrl, setApiUrl } from './api.js';
+import { LOGO_HEADER, LOGO_LOGIN } from './config.js';
 import home from './views/home.js';
 import shops from './views/shops.js';
 import shop from './views/shop.js';
@@ -46,7 +47,7 @@ function showLogin(msg) {
   const url = getApiUrl();
   loginEl.innerHTML = `
   <div class="login-card">
-    <div class="brand"><div class="logo">Z</div><div><h1>ZUSS Sales</h1><p>Workshop sales · Kelantan</p></div></div>
+    <div class="brand"><div class="logo" id="loginLogo">ZUSS</div></div><div class="brand-sub"><h1>Sales</h1><p>Workshop sales · Kelantan</p></div>
     ${msg ? `<p class="error-box">${esc(msg)}</p>` : ''}
     <form id="loginForm" method="post" action="#" autocomplete="on">
       <label>Name<input id="lName" name="username" autocomplete="username" autocapitalize="words" required value="${esc(localStorage.getItem('zuss.lastName') || '')}"></label>
@@ -107,6 +108,19 @@ function startApp() {
   syncPill();
   render();
 }
+
+// Official logo images replace the text ZUSS mark once they load (text stays if a file is missing).
+function applyLogo() {
+  [['brandMark', LOGO_HEADER], ['loginLogo', LOGO_LOGIN]].forEach(([id, url]) => {
+    const el = document.getElementById(id);
+    if (!el || !url || el.classList.contains('has-img')) return;
+    const img = new Image();
+    img.onload = () => { el.classList.add('has-img'); el.innerHTML = ''; img.alt = 'ZUSS'; el.appendChild(img); };
+    img.src = url;
+  });
+}
+new MutationObserver(applyLogo).observe(document.getElementById('login'), { childList: true });
+applyLogo();
 
 // Setup link: index.html?api=<Apps Script URL> saves the server link on this device, then hides it from the address bar.
 (() => {

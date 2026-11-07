@@ -161,6 +161,7 @@ export function scheduleSync(ms = 400) {
 export function sync() {
   if (syncPromise) return syncPromise;
   if (!store.session) return Promise.resolve();
+  if (!navigator.onLine) { store.status.online = false; emit(); return Promise.resolve(); } // retried on the 'online' event
   syncPromise = (async () => {
     store.status.syncing = true; store.status.error = ''; emit();
     try {

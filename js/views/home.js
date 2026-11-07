@@ -11,7 +11,7 @@ function pct(a, b) { return b > 0 ? Math.min(100, Math.round(a / b * 100)) : 0; 
 
 export default {
   tab: 'home',
-  title: 'ZUSS Sales',
+  title: 'Sales',
   render() {
     const v = V();
     const live = v.orders.filter(o => o.status !== 'Cancelled');

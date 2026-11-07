@@ -48,6 +48,7 @@ export function render(opts = {}) {
   el.innerHTML = next.view.render(next.params);
   document.getElementById('hdrTitle').textContent = typeof next.view.title === 'function' ? next.view.title(next.params) : (next.view.title || '');
   document.getElementById('hdrBack').hidden = !next.view.back;
+  document.getElementById('brandMark').hidden = !!next.view.back;
   document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === next.view.tab));
   if (next.view.mount) next.view.mount(el, next.params);
   if (focusId) {
