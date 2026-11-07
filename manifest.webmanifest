@@ -1,0 +1,16 @@
+{
+  "name": "ZUSS Sales",
+  "short_name": "ZUSS Sales",
+  "description": "ZUSS Oil workshop sales — shops, orders, visits.",
+  "start_url": "./index.html#/home",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#17324d",
+  "theme_color": "#17324d",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

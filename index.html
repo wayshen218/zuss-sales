@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#17324d">
+<meta name="color-scheme" content="light">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ZUSS Sales">
+<meta name="format-detection" content="telephone=no">
+<title>ZUSS Sales</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div id="login" hidden></div>
+<div id="app" hidden>
+  <header class="top">
+    <button id="hdrBack" class="hdr-back" aria-label="Back" hidden>‹</button>
+    <h1 id="hdrTitle">ZUSS Sales</h1>
+    <button id="syncPill" class="sync-pill" type="button">…</button>
+  </header>
+  <button id="updateBar" class="update-bar" hidden>A new version is ready — tap to update</button>
+  <main id="view"></main>
+  <nav class="tabs" aria-label="Main">
+    <button data-tab="home"><span aria-hidden="true">⌂</span>Home</button>
+    <button data-tab="shops"><span aria-hidden="true">🏪</span>Shops</button>
+    <button data-tab="orders"><span aria-hidden="true">🧾</span>Orders</button>
+    <button data-tab="prices"><span aria-hidden="true">▤</span>Prices</button>
+    <button data-tab="daily"><span aria-hidden="true">✓</span>Daily</button>
+    <button data-tab="more"><span aria-hidden="true">⋯</span>More</button>
+  </nav>
+</div>
+<div id="sheet" hidden></div>
+<div id="dialog" hidden></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<noscript>This app needs JavaScript turned on.</noscript>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
