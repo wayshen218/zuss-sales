@@ -65,7 +65,7 @@ function showLogin(msg) {
     const u = document.getElementById('lUrl').value.trim();
     if (u) setApiUrl(u);
     if (!getApiUrl()) { toast('Paste the server link first', 'error'); return; }
-    btn.disabled = true; btn.textContent = 'Logging in…';
+    btn.disabled = true; btn.textContent = 'Checking PIN & loading shops…';
     try {
       const name = document.getElementById('lName').value.trim();
       await login(name, document.getElementById('lPin').value.trim());

@@ -1,6 +1,6 @@
 // One order: summary table, date-time log, copy/share, HQ status, payment.
 import { esc, rm, fmtDateTime, copyText, nowIso, uid, cleanAddress, telLink, waLink, digits } from '../util.js';
-import { orderById, itemsFor, logsFor, dispatch, canHQ, isPendingOrder, shopById, HQ_STATUSES, me } from '../store.js';
+import { orderById, itemsFor, logsFor, dispatch, canHQ, isPendingOrder, shopById, HQ_STATUSES, me, isAdmin } from '../store.js';
 import { empty, toast, confirmBox, promptBox, tag, query, go } from '../ui.js';
 import { summaryText, unitLabel, hqNextStatus } from '../orderlogic.js';
 import { hqTag, paidTag } from './common.js';
@@ -30,7 +30,7 @@ export default {
     const phone = o.phone || shop.phone;
     return `
     ${isNew ? `<div class="banner ok">✓ Order saved${pending ? ' on this phone — it will sync to the Sheet automatically' : ''}. Copy the summary and send it to the shop owner and ZUSS.</div>` : ''}
-    ${cancelled ? `<div class="banner warn">This order was cancelled.</div>` : ''}
+    ${cancelled ? `<div class="banner warn"><span>This order was cancelled. It is not counted in sales or commission.</span>${isAdmin() ? '<button class="btn danger small" data-act="deleteOrder">Delete permanently</button>' : ''}</div>` : ''}
     <div class="two-col">
       <div>
         <div class="card">
@@ -139,6 +139,13 @@ export default {
     unpaid: async () => {
       if (!(await confirmBox('Mark this order as payment NOT received?', { ok: 'Mark not received', danger: true }))) return;
       logEvent('Payment marked not received', '', { paid: false });
+    },
+    deleteOrder: async () => {
+      const o = orderById(orderId);
+      if (!(await confirmBox(`Permanently delete ${o.order_no}?\n\nIts items and log are removed from the Google Sheet. This cannot be undone. Use this only for test orders or mistakes.`, { title: 'Delete order', ok: 'Delete permanently', danger: true }))) return;
+      dispatch('order.delete', { order_id: o.id });
+      toast('Order deleted');
+      go('#/orders');
     },
     cancel: async () => {
       const reason = await promptBox('Why is this order cancelled?', { title: 'Cancel order', ok: 'Cancel order', placeholder: 'e.g. shop changed mind' });

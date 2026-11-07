@@ -89,6 +89,12 @@ function applyOp(v, op, me) {
       v.checklist.push({ id, date: d.date, user_id: me && me.user_id, done: JSON.stringify(d.done || []), decision_makers: d.decision_makers, notes: d.notes, updated_at: d.at });
       break;
     }
+    case 'order.delete': {
+      v.orders = v.orders.filter(x => x.id !== d.order_id);
+      v.items = v.items.filter(x => x.order_id !== d.order_id);
+      v.logs = v.logs.filter(x => x.order_id !== d.order_id);
+      break;
+    }
     case 'settings.save':
       Object.keys(d.values || {}).forEach(k => { v.settings[k] = String(d.values[k]); });
       break;
@@ -124,7 +130,15 @@ export async function login(name, pin) {
   // Keep unsynced changes only if the same person logs back in.
   if (prevUser && prevUser !== r.user.user_id) { store.outbox = []; write(K_OUT, []); }
   store.outbox = store.outbox.filter(op => !op.user_id || op.user_id === r.user.user_id);
-  await sync();
+  if (r.data) {
+    // The server sends all data with the login reply, so the app can open straight away.
+    store.base = r.data; write(K_BASE, store.base);
+    store.status.lastSync = nowIso(); write('zuss.lastSync', store.status.lastSync);
+    rebuild();
+    if (store.outbox.length) scheduleSync(50);
+  } else {
+    await sync();
+  }
   return r.user;
 }
 

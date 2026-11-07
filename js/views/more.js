@@ -4,7 +4,7 @@ import { render, toast, confirmBox, go, empty, tag } from '../ui.js';
 import { getApiUrl, call } from '../api.js';
 import { APP_VERSION } from '../config.js';
 
-const TYPE_LABEL = { 'shop.patch': 'Shop change', 'visit.add': 'Check-in', 'order.create': 'New order', 'order.update': 'Order edit', 'order.event': 'Order update', 'fav.set': 'Favourite', 'checklist.save': 'Checklist', 'settings.save': 'Settings', 'pin.change': 'PIN change' };
+const TYPE_LABEL = { 'shop.patch': 'Shop change', 'visit.add': 'Check-in', 'order.create': 'New order', 'order.update': 'Order edit', 'order.event': 'Order update', 'fav.set': 'Favourite', 'checklist.save': 'Checklist', 'settings.save': 'Settings', 'pin.change': 'PIN change', 'order.delete': 'Order delete' };
 
 export default {
   tab: 'more',
