@@ -75,22 +75,55 @@ export function haversineKm(lat1, lng1, lat2, lng2) {
   const a = Math.sin(dLat / 2) ** 2 + Math.cos(toR(lat1)) * Math.cos(toR(lat2)) * Math.sin(dLng / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(a));
 }
-export const hasPin = s => s && s.lat !== '' && s.lng !== '' && s.lat != null && s.lng != null && !isNaN(Number(s.lat)) && !isNaN(Number(s.lng)) && Number(s.lat) !== 0;
+// The shop's pin as clean numbers, or null. Accepts numbers or text (incl. comma decimals like "6,1254"),
+// and fixes latitude/longitude saved the wrong way round (latitude can never be above 90).
+export function pinOf(s) {
+  if (!s || s.lat === '' || s.lng === '' || s.lat == null || s.lng == null) return null;
+  const num = v => Number(String(v).trim().replace(/\s/g, '').replace(/^(-?\d+),(\d+)$/, '$1.$2'));
+  let lat = num(s.lat), lng = num(s.lng);
+  if (!isFinite(lat) || !isFinite(lng) || (lat === 0 && lng === 0)) return null;
+  if (Math.abs(lat) > 90 && Math.abs(lng) <= 90) [lat, lng] = [lng, lat];
+  if (Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
+  return { lat, lng };
+}
+export const hasPin = s => !!pinOf(s);
 
 export function cleanAddress(a) { return String(a || '').replace(/\s*\(area only\)\s*/i, '').trim(); }
 export function navQuery(shop) {
   return [shop.name, cleanAddress(shop.address), shop.area, shop.state || 'Kelantan', 'Malaysia'].filter(Boolean).join(', ');
 }
+// Clean "lat,lng" text: plain numbers, max 6 decimals (Waze rejects odd formats).
+export function latLngText(shop) {
+  const p = pinOf(shop);
+  return `${+p.lat.toFixed(6)},${+p.lng.toFixed(6)}`;
+}
+// Same format Waze produces when you share a place from the Waze app.
 export function wazeLink(shop) {
   return hasPin(shop)
-    ? `https://waze.com/ul?ll=${shop.lat},${shop.lng}&navigate=yes`
-    : `https://waze.com/ul?q=${encodeURIComponent(navQuery(shop))}&navigate=yes`;
+    ? `https://ul.waze.com/ul?ll=${encodeURIComponent(latLngText(shop))}&navigate=yes&zoom=17`
+    : `https://ul.waze.com/ul?q=${encodeURIComponent(navQuery(shop))}&navigate=yes`;
 }
 export function gmapsLink(shop) {
   return hasPin(shop)
-    ? `https://www.google.com/maps/dir/?api=1&destination=${shop.lat},${shop.lng}&travelmode=driving`
+    ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(latLngText(shop))}&travelmode=driving`
     : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(navQuery(shop))}&travelmode=driving`;
 }
+
+// App links that open the Waze / Google Maps apps directly (used on iPhone, where web links
+// opened from a home-screen app land in a mini browser instead of the app).
+export function navAppLink(shop, app) {
+  const pin = hasPin(shop);
+  const dest = pin ? latLngText(shop) : encodeURIComponent(navQuery(shop));
+  if (app === 'waze') return pin ? `waze://?ll=${dest}&navigate=yes` : `waze://?q=${dest}&navigate=yes`;
+  return `comgooglemaps://?daddr=${dest}&directionsmode=driving`;
+}
+// Web fallback that just shows the place (no route), which works in any browser.
+export function navWebFallback(shop, app) {
+  if (app === 'waze') return wazeLink(shop);
+  const q = hasPin(shop) ? latLngText(shop) : navQuery(shop);
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+}
+export const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
 // Parse a pasted Google Maps link or "lat, lng" text locally. Short links need the server.
 export function parseLatLng(s) {

@@ -1,3 +1,4 @@
+import { latLngText } from '../util.js';
 import { esc, rm, telLink, waLink, wazeLink, gmapsLink, hasPin, fmtDateTime, relDays, fmtDate, nowIso, uid, digits, cleanAddress, parseLatLng, copyText } from '../util.js';
 import { shopById, ordersFor, visitsFor, dispatch, me, store, tierOf } from '../store.js';
 import { stageTag, tag, empty, toast, go, openSheet, updateSheet, closeSheet, confirmBox, promptBox, back } from '../ui.js';
@@ -16,9 +17,10 @@ function locationCard(s) {
     return `<div class="card">
       <div class="card-head"><h3>📍 Location pinned</h3>${km != null ? tag(fmtKm(km) + ' away', 'pin') : ''}</div>
       <p class="small muted">Pinned ${esc(fmtDateTime(s.pinned_at))}${s.pinned_by ? ' by ' + esc(s.pinned_by) : ''}${s.pin_accuracy_m ? ` · accuracy ±${esc(s.pin_accuracy_m)} m` : ''}</p>
+      <p class="small coords">📌 <b>${esc(latLngText(s).replace(',', ', '))}</b> <button class="link-btn" data-act="copyCoords">Copy</button></p>
       <div class="btn-row">
-        <a class="btn nav waze" href="${esc(wazeLink(s))}" target="_blank" rel="noopener">Waze</a>
-        <a class="btn nav gmaps" href="${esc(gmapsLink(s))}" target="_blank" rel="noopener">Google Maps</a>
+        <a class="btn nav waze" href="${esc(wazeLink(s))}" target="_blank" rel="noopener" data-nav="waze" data-shop="${esc(s.id)}">Waze</a>
+        <a class="btn nav gmaps" href="${esc(gmapsLink(s))}" target="_blank" rel="noopener" data-nav="gmaps" data-shop="${esc(s.id)}">Google Maps</a>
       </div>
       <div class="btn-row mt-s">
         <button class="btn ghost small" data-act="pinHere">Update pin (I'm at the shop)</button>
@@ -35,8 +37,8 @@ function locationCard(s) {
       <button class="btn ghost" data-act="pasteLink">Paste Maps link</button>
     </div>
     <p class="small muted mt-s">Until pinned, navigation searches by name and address (may be inaccurate):
-      <a href="${esc(wazeLink(s))}" target="_blank" rel="noopener">Waze</a> ·
-      <a href="${esc(gmapsLink(s))}" target="_blank" rel="noopener">Google Maps</a></p>
+      <a href="${esc(wazeLink(s))}" target="_blank" rel="noopener" data-nav="waze" data-shop="${esc(s.id)}">Waze</a> ·
+      <a href="${esc(gmapsLink(s))}" target="_blank" rel="noopener" data-nav="gmaps" data-shop="${esc(s.id)}">Google Maps</a></p>
   </div>`;
 }
 
@@ -154,8 +156,8 @@ export default {
           <div class="quick">
             <a class="q ${hasPhone ? '' : 'disabled'}" ${hasPhone ? `href="${esc(telLink(s.phone))}"` : ''}><span>📞</span>Call</a>
             <a class="q ${hasPhone ? '' : 'disabled'}" ${hasPhone ? `href="${esc(waLink(s.phone))}" target="_blank" rel="noopener"` : ''}><span>💬</span>WhatsApp</a>
-            <a class="q" href="${esc(wazeLink(s))}" target="_blank" rel="noopener"><span>🚗</span>Waze</a>
-            <a class="q" href="${esc(gmapsLink(s))}" target="_blank" rel="noopener"><span>🗺️</span>Maps</a>
+            <a class="q" href="${esc(wazeLink(s))}" target="_blank" rel="noopener" data-nav="waze" data-shop="${esc(s.id)}"><span>🚗</span>Waze</a>
+            <a class="q" href="${esc(gmapsLink(s))}" target="_blank" rel="noopener" data-nav="gmaps" data-shop="${esc(s.id)}"><span>🗺️</span>Maps</a>
           </div>
           <div class="btn-row">
             <a class="btn cta grow" href="#/order/new/${encodeURIComponent(s.id)}">🛒 New order</a>
@@ -207,6 +209,7 @@ export default {
       if (!(await confirmBox('Remove the saved location pin for this shop?', { ok: 'Remove', danger: true }))) return;
       dispatch('shop.patch', { id: shopId, at: nowIso(), fields: { lat: '', lng: '', pin_accuracy_m: '', pinned_at: '', pinned_by: '' } });
     },
+    copyCoords: async () => { const sh = shopById(shopId); toast((await copyText(latLngText(sh).replace(',', ', '))) ? 'Coordinates copied' : 'Could not copy', ''); },
     restore: () => { dispatch('shop.patch', { id: shopId, at: nowIso(), fields: { deleted: false } }); toast('Shop restored'); }
   }
 };

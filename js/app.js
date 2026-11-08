@@ -1,6 +1,7 @@
 import { store, subscribe, login, sync, onAuthLost, pendingCount, takeRejectNotice } from './store.js';
 import { route, render, go, back, toast, sheetIsOpen, currentView } from './ui.js';
-import { esc, fmtDateTime } from './util.js';
+import { esc, fmtDateTime, isIOS, navAppLink, navWebFallback } from './util.js';
+import { shopById } from './store.js';
 import { initPhotos, pendingPhotoCount } from './photos.js';
 import { getApiUrl, setApiUrl } from './api.js';
 import { LOGO_HEADER, LOGO_LOGIN } from './config.js';
@@ -132,6 +133,25 @@ applyLogo();
     history.replaceState(null, '', location.pathname + (location.hash || '#/home'));
   }
 })();
+
+// Waze / Google Maps buttons. iPhone: open the app itself; if it isn't installed, open the web map instead.
+// Android: the normal web link already opens the app.
+document.addEventListener('click', ev => {
+  const a = ev.target.closest('a[data-nav]');
+  if (!a || !isIOS()) return;
+  const shop = shopById(a.dataset.shop);
+  if (!shop) return;
+  ev.preventDefault();
+  const app = a.dataset.nav;
+  let left = false;
+  const onHide = () => { if (document.visibilityState === 'hidden') left = true; };
+  document.addEventListener('visibilitychange', onHide);
+  window.location.href = navAppLink(shop, app);
+  setTimeout(() => {
+    document.removeEventListener('visibilitychange', onHide);
+    if (!left && document.visibilityState === 'visible') window.open(navWebFallback(shop, app), '_blank');
+  }, 1600);
+}, true);
 
 onAuthLost(() => { started && (app.hidden = true); showLogin('Your session ended. Please log in again — unsynced changes are kept.'); });
 

@@ -1,4 +1,4 @@
-import { esc, hasPin, haversineKm, relDays, fmtDate, fmtDateTime, today, rm } from '../util.js';
+import { esc, pinOf, hasPin, haversineKm, relDays, fmtDate, fmtDateTime, today, rm } from '../util.js';
 import { isFav, lastVisit, ordersFor, dispatch, tierOf } from '../store.js';
 import { stageTag, tag } from '../ui.js';
 import { lastPosition } from '../geo.js';
@@ -16,7 +16,8 @@ export function toggleFav(id) {
 export function distanceKm(shop) {
   const p = lastPosition();
   if (!p || !hasPin(shop)) return null;
-  return haversineKm(p.lat, p.lng, Number(shop.lat), Number(shop.lng));
+  const pin = pinOf(shop);
+  return haversineKm(p.lat, p.lng, pin.lat, pin.lng);
 }
 export const fmtKm = km => km == null ? '' : (km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(km < 10 ? 1 : 0)} km`);
 
