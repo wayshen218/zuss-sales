@@ -2,6 +2,7 @@ import { esc, hasPin, haversineKm, relDays, fmtDate, fmtDateTime, today, rm } fr
 import { isFav, lastVisit, ordersFor, dispatch, tierOf } from '../store.js';
 import { stageTag, tag } from '../ui.js';
 import { lastPosition } from '../geo.js';
+import { hasDocs } from '../photos.js';
 
 export function star(shop) {
   const on = isFav(shop.id);
@@ -44,6 +45,7 @@ export function shopRow(s) {
         ${s.stockist ? tag('Stockist', 'gold') : ''}
         ${s.area ? tag(s.area, 'area') : ''}
         ${hasPin(s) ? tag(km != null ? '📍 ' + fmtKm(km) : '📍 Pinned', 'pin') : ''}
+        ${hasDocs(s.id) ? tag('📇 Docs', 'pin') : ''}
       </div>
       <div class="shop-sub">${esc(s.phone || 'No phone')}${s.contact ? ' · ' + esc(s.contact) : ''}${!lv ? ' · <span class="muted">not visited yet</span>' : ''}</div>
       ${fu || visit || order ? `<div class="shop-info">${fu}${visit}${order}</div>` : ''}

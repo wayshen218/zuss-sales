@@ -4,6 +4,8 @@ import { orderById, itemsFor, logsFor, dispatch, canHQ, isPendingOrder, shopById
 import { empty, toast, confirmBox, promptBox, tag, query, go } from '../ui.js';
 import { summaryText, unitLabel, hqNextStatus } from '../orderlogic.js';
 import { hqTag, paidTag } from './common.js';
+import { hasDocs } from '../photos.js';
+import { shareShopDocs } from './docs.js';
 
 let orderId = null;
 
@@ -69,6 +71,7 @@ export default {
             ${navigator.share ? `<button class="btn grow" data-act="share">Share…</button>` : ''}
           </div>
           ${digits(phone).length >= 7 ? `<a class="btn ghost full mt-s" href="${esc(waLink(phone, summaryText(o)))}" target="_blank" rel="noopener">💬 Open owner's WhatsApp with summary</a>` : ''}
+          ${hasDocs(o.shop_id) ? `<button class="btn ghost full mt-s" data-act="shareDocs">📇 Share name card + SSM</button>` : `<p class="tiny muted mt-s">No name card / SSM photo for this shop yet — add them on the <a href="#/shop/${encodeURIComponent(o.shop_id)}">shop page</a>.</p>`}
           <div class="sent-grid mt-s">
             <button class="sent ${sentOwner ? 'done' : ''}" data-act="markSent" data-who="owner" ${cancelled ? 'disabled' : ''}>${sentOwner ? '✓' : '○'} Sent to owner${sentOwner ? `<small>${esc(fmtDateTime(sentOwner.at))}</small>` : ''}</button>
             <button class="sent ${sentZuss ? 'done' : ''}" data-act="markSent" data-who="zuss" ${cancelled ? 'disabled' : ''}>${sentZuss ? '✓' : '○'} Sent to ZUSS${sentZuss ? `<small>${esc(fmtDateTime(sentZuss.at))}</small>` : ''}</button>
@@ -103,6 +106,7 @@ export default {
     </div>`;
   },
   actions: {
+    shareDocs: () => { const o = orderById(orderId); shareShopDocs(o.shop_id, `Order No: ${o.order_no}`); },
     copy: async () => {
       const ok = await copyText(summaryText(orderById(orderId)));
       toast(ok ? 'Summary copied — paste it in WhatsApp' : 'Could not copy. Use Share instead.', ok ? '' : 'error');

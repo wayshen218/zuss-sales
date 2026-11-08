@@ -1,6 +1,7 @@
 import { store, subscribe, login, sync, onAuthLost, pendingCount, takeRejectNotice } from './store.js';
 import { route, render, go, back, toast, sheetIsOpen, currentView } from './ui.js';
 import { esc, fmtDateTime } from './util.js';
+import { initPhotos, pendingPhotoCount } from './photos.js';
 import { getApiUrl, setApiUrl } from './api.js';
 import { LOGO_HEADER, LOGO_LOGIN } from './config.js';
 import home from './views/home.js';
@@ -30,7 +31,7 @@ const loginEl = document.getElementById('login');
 function syncPill() {
   const el = document.getElementById('syncPill');
   const s = store.status;
-  const n = pendingCount();
+  const n = pendingCount() + pendingPhotoCount();
   let cls = 'ok', txt = 'Synced';
   if (!s.online) { cls = 'off'; txt = n ? `Offline · ${n} saved` : 'Offline'; }
   else if (s.syncing) { cls = 'busy'; txt = 'Syncing…'; }
@@ -84,6 +85,7 @@ function showLogin(msg) {
 
 let started = false;
 function startApp() {
+  initPhotos();
   loginEl.hidden = true; loginEl.innerHTML = '';
   app.hidden = false;
   if (!started) {

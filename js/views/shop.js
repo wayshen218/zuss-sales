@@ -1,10 +1,12 @@
-import { esc, rm, telLink, waLink, wazeLink, gmapsLink, hasPin, fmtDateTime, relDays, fmtDate, nowIso, uid, digits, cleanAddress, parseLatLng } from '../util.js';
+import { esc, rm, telLink, waLink, wazeLink, gmapsLink, hasPin, fmtDateTime, relDays, fmtDate, nowIso, uid, digits, cleanAddress, parseLatLng, copyText } from '../util.js';
 import { shopById, ordersFor, visitsFor, dispatch, me, store, tierOf } from '../store.js';
 import { stageTag, tag, empty, toast, go, openSheet, updateSheet, closeSheet, confirmBox, promptBox, back } from '../ui.js';
 import { star, toggleFav, hqTag, paidTag, fmtKm, distanceKm } from './common.js';
 import { openShopForm } from './shopform.js';
 import { bestPosition, geoErrorText } from '../geo.js';
 import { call } from '../api.js';
+import { docsCard, openPhotoViewer, shareShopDocs, handlePicked } from './docs.js';
+import { hydrate } from '../photos.js';
 
 let shopId = null;
 
@@ -77,18 +79,27 @@ async function pasteLinkFlow(s) {
   const txt = await promptBox('Paste a Google Maps link for this shop, or coordinates like "6.1254, 102.2386".', { title: 'Set pin from link', placeholder: 'https://maps.app.goo.gl/…', ok: 'Use link' });
   if (!txt) return;
   let ll = parseLatLng(txt.trim());
+  let approx = false, place = '';
   if (!ll && /^https?:\/\//i.test(txt.trim())) {
-    if (!navigator.onLine) { toast('Short links need internet to read. Try again when online.', 'error'); return; }
+    if (!navigator.onLine) { toast('Reading a link needs internet. Try again when online.', 'error'); return; }
     toast('Reading link…');
-    try {
-      const r = await call('resolveMap', { token: store.session.token, url: txt.trim() }, 20000);
-      if (r.ok) ll = { lat: r.lat, lng: r.lng };
-      else { toast(r.error === 'SERVER' || !r.message ? 'Could not read that link. At the shop, use "Pin this location" instead.' : r.message, 'error'); return; }
-    } catch (e) { toast('Could not reach server: ' + e.message, 'error'); return; }
+    let r;
+    try { r = await call('resolveMap', { token: store.session.token, url: txt.trim() }, 30000); }
+    catch (e) { toast('Could not reach server: ' + e.message, 'error'); return; }
+    if (r.ok) { ll = { lat: r.lat, lng: r.lng }; approx = !!r.approx; place = r.place || ''; }
+    else {
+      const msg = r.error === 'SERVER' || !r.message ? 'Could not read that link. At the shop, use "Pin this location" instead.' : r.message;
+      const details = `Link: ${txt.trim()}\n${r.trail || r.message || r.error || ''}`;
+      if (await confirmBox(msg + '\n\nTap "Copy details" and send them to Shen so the link reader can be fixed.', { title: 'Link not read', ok: 'Copy details', cancel: 'Close' })) {
+        toast((await copyText(details)) ? 'Details copied' : 'Could not copy', '');
+      }
+      return;
+    }
   }
   if (!ll) { toast('No location found in that text', 'error'); return; }
-  if (!(await confirmBox(`Set pin to ${ll.lat.toFixed(5)}, ${ll.lng.toFixed(5)}?\n\nTip: after saving, tap Google Maps to double-check it lands on the shop.`, { title: hasPin(s) ? 'Replace pin' : 'Save pin', ok: 'Save pin' }))) return;
-  savePin(s, { lat: ll.lat, lng: ll.lng, accuracy: '' }, 'from link');
+  const note = approx ? `\n\nFound from the address only ("${place}") — may be off by a few hundred metres. Re-pin with "Pin this location" when at the shop.` : '';
+  if (!(await confirmBox(`Set pin to ${ll.lat.toFixed(5)}, ${ll.lng.toFixed(5)}?${note}\n\nTip: after saving, tap Google Maps to check it lands on the shop.`, { title: hasPin(s) ? 'Replace pin' : 'Save pin', ok: 'Save pin' }))) return;
+  savePin(s, { lat: ll.lat, lng: ll.lng, accuracy: '' }, approx ? 'from address' : 'from link');
 }
 
 function checkInFlow(s) {
@@ -152,6 +163,7 @@ export default {
           </div>
         </div>
         ${locationCard(s)}
+        ${docsCard(s)}
         <div class="card">
           <div class="card-head"><h3>Details</h3></div>
           <dl class="details">
@@ -181,7 +193,11 @@ export default {
       </div>
     </div>`;
   },
+  mount(el) { hydrate(el); },
   actions: {
+    photoPicked: el => handlePicked(shopId, el),
+    viewPhoto: el => openPhotoViewer(shopId, el.dataset.id),
+    shareDocs: () => shareShopDocs(shopId),
     toggleFav: el => toggleFav(el.dataset.id),
     edit: () => openShopForm(shopId),
     checkIn: () => checkInFlow(shopById(shopId)),

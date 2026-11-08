@@ -14,7 +14,7 @@ export const AREAS = ['Kota Bharu', 'Salor', 'Pasir Mas', 'Tumpat', 'Bachok', 'P
 const read = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v ?? d; } catch (e) { return d; } };
 const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { console.warn('storage full?', e); } };
 
-const emptyBase = () => ({ users: [], settings: {}, products: [], shops: [], orders: [], items: [], logs: [], visits: [], favourites: [], checklist: [] });
+const emptyBase = () => ({ users: [], settings: {}, products: [], shops: [], orders: [], items: [], logs: [], visits: [], favourites: [], checklist: [], photos: [] });
 
 export const store = {
   session: read(K_SESSION, null),          // { token, me }
@@ -27,6 +27,10 @@ export const store = {
 
 export const subscribe = fn => { listeners.add(fn); return () => listeners.delete(fn); };
 const emit = () => listeners.forEach(fn => { try { fn(); } catch (e) { console.error(e); } });
+export const notify = () => { rebuild(); emit(); };
+// Work to do at the start of every sync (e.g. uploading photos taken offline).
+const syncHooks = [];
+export const registerSyncHook = fn => { syncHooks.push(fn); };
 
 /* ───────── Totals (same rules as the server) ───────── */
 export function orderTotals(items) {
@@ -95,6 +99,9 @@ function applyOp(v, op, me) {
       v.logs = v.logs.filter(x => x.order_id !== d.order_id);
       break;
     }
+    case 'photo.delete':
+      v.photos = (v.photos || []).filter(x => x.id !== d.id);
+      break;
     case 'settings.save':
       Object.keys(d.values || {}).forEach(k => { v.settings[k] = String(d.values[k]); });
       break;
@@ -104,6 +111,7 @@ function applyOp(v, op, me) {
 
 function rebuild() {
   const v = JSON.parse(JSON.stringify(store.base || emptyBase()));
+  v.photos = v.photos || [];
   const me = store.session && store.session.me;
   store.outbox.forEach(op => { try { applyOp(v, op, me); } catch (e) { console.error('replay failed', op, e); } });
   store.view = v;
@@ -165,6 +173,7 @@ export function sync() {
   syncPromise = (async () => {
     store.status.syncing = true; store.status.error = ''; emit();
     try {
+      for (const hook of syncHooks) { try { await hook(); } catch (e) { console.warn('sync hook failed', e); } }
       // 1. Send queued changes in order, a batch at a time.
       while (store.outbox.length) {
         const batch = store.outbox.slice(0, 25);
