@@ -82,7 +82,8 @@ async function pasteLinkFlow(s) {
     toast('Reading link…');
     try {
       const r = await call('resolveMap', { token: store.session.token, url: txt.trim() }, 20000);
-      if (r.ok) ll = { lat: r.lat, lng: r.lng }; else { toast(r.message || 'Could not read that link', 'error'); return; }
+      if (r.ok) ll = { lat: r.lat, lng: r.lng };
+      else { toast(r.error === 'SERVER' || !r.message ? 'Could not read that link. At the shop, use "Pin this location" instead.' : r.message, 'error'); return; }
     } catch (e) { toast('Could not reach server: ' + e.message, 'error'); return; }
   }
   if (!ll) { toast('No location found in that text', 'error'); return; }
