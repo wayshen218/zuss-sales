@@ -1,6 +1,6 @@
 // Offline support. App files: network first (so updates arrive immediately), cached copy when offline.
 // Product images: cache first. Calls to Google (the Sheet) are never cached.
-const VERSION = 'zuss-v1.5.2';
+const VERSION = 'zuss-v1.5.3';
 const SHELL = [
   './', './index.html', './manifest.webmanifest', './css/app.css',
   './js/app.js', './js/config.js', './js/util.js', './js/api.js', './js/store.js', './js/ui.js', './js/geo.js', './js/orderlogic.js', './js/photos.js', './js/views/docs.js',

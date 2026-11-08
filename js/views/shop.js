@@ -1,4 +1,4 @@
-import { latLngText } from '../util.js';
+import { latLngText, pinOf, inMalaysia } from '../util.js';
 import { esc, rm, telLink, waLink, wazeLink, gmapsLink, hasPin, fmtDateTime, relDays, fmtDate, nowIso, uid, digits, cleanAddress, parseLatLng, copyText } from '../util.js';
 import { shopById, ordersFor, visitsFor, dispatch, me, store, tierOf } from '../store.js';
 import { stageTag, tag, empty, toast, go, openSheet, updateSheet, closeSheet, confirmBox, promptBox, back } from '../ui.js';
@@ -18,6 +18,7 @@ function locationCard(s) {
       <div class="card-head"><h3>📍 Location pinned</h3>${km != null ? tag(fmtKm(km) + ' away', 'pin') : ''}</div>
       <p class="small muted">Pinned ${esc(fmtDateTime(s.pinned_at))}${s.pinned_by ? ' by ' + esc(s.pinned_by) : ''}${s.pin_accuracy_m ? ` · accuracy ±${esc(s.pin_accuracy_m)} m` : ''}</p>
       <p class="small coords">📌 <b>${esc(latLngText(s).replace(',', ', '))}</b> <button class="link-btn" data-act="copyCoords">Copy</button></p>
+      ${inMalaysia(pinOf(s)) ? '' : `<p class="error-box small">⚠ This pin is outside Malaysia, so it is not the shop's real location and navigation will fail. Tap <b>Remove pin</b>, then pin it again at the shop.</p>`}
       <div class="btn-row">
         <a class="btn nav waze" href="${esc(wazeLink(s))}" target="_blank" rel="noopener" data-nav="waze" data-shop="${esc(s.id)}">Waze</a>
         <a class="btn nav gmaps" href="${esc(gmapsLink(s))}" target="_blank" rel="noopener" data-nav="gmaps" data-shop="${esc(s.id)}">Google Maps</a>
@@ -99,6 +100,10 @@ async function pasteLinkFlow(s) {
     }
   }
   if (!ll) { toast('No location found in that text', 'error'); return; }
+  if (!inMalaysia(ll)) {
+    toast(`${ll.lat.toFixed(4)}, ${ll.lng.toFixed(4)} is outside Malaysia — not the shop. Pin it at the shop instead.`, 'error');
+    return;
+  }
   const note = approx ? `\n\nFound from the address only ("${place}") — may be off by a few hundred metres. Re-pin with "Pin this location" when at the shop.` : '';
   if (!(await confirmBox(`Set pin to ${ll.lat.toFixed(5)}, ${ll.lng.toFixed(5)}?${note}\n\nTip: after saving, tap Google Maps to check it lands on the shop.`, { title: hasPin(s) ? 'Replace pin' : 'Save pin', ok: 'Save pin' }))) return;
   savePin(s, { lat: ll.lat, lng: ll.lng, accuracy: '' }, approx ? 'from address' : 'from link');

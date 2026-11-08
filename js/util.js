@@ -87,6 +87,8 @@ export function pinOf(s) {
   return { lat, lng };
 }
 export const hasPin = s => !!pinOf(s);
+// All shops are in Malaysia; a pin outside it is a mistake (e.g. Google's default USA map point).
+export const inMalaysia = p => !!p && p.lat >= 0.8 && p.lat <= 7.5 && p.lng >= 99.5 && p.lng <= 119.5;
 
 export function cleanAddress(a) { return String(a || '').replace(/\s*\(area only\)\s*/i, '').trim(); }
 export function navQuery(shop) {
